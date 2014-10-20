@@ -173,20 +173,7 @@ class EB_NWChem(ConfigureMake):
         env.setvar('MPI_LOC', os.path.dirname(os.getenv('MPI_INC_DIR')))
         env.setvar('MPI_LIB', os.getenv('MPI_LIB_DIR'))
         env.setvar('MPI_INCLUDE', os.getenv('MPI_INC_DIR'))
-        libmpi = None
-        mpi_family = self.toolchain.mpi_family()
-        if mpi_family in toolchain.OPENMPI:
-            libmpi = "-lmpi_f90 -lmpi_f77 -lmpi -ldl -Wl,--export-dynamic -lnsl -lutil"
-        elif mpi_family in [toolchain.INTELMPI]:
-            if self.cfg['armci_network'] in ["MPI-MT"]:
-                libmpi = "-lmpigf -lmpigi -lmpi_ilp64 -lmpi_mt"
-            else:
-                libmpi = "-lmpigf -lmpigi -lmpi_ilp64 -lmpi"
-        elif mpi_family in [toolchain.MPICH2]:
-            libmpi = "-lmpich -lopa -lmpl -lrt -lpthread"
-        else:
-            self.log.error("Don't know how to set LIBMPI for %s" % mpi_family)
-        env.setvar('LIBMPI', libmpi)
+        env.setvar('LIBMPI', os.getenv('MPI_LIB_SHARED'))
 
         # compiler optimization flags: set environment variables _and_ add them to list of make options
         self.setvar_env_makeopt('COPTIMIZE', os.getenv('CFLAGS'))
@@ -194,7 +181,7 @@ class EB_NWChem(ConfigureMake):
 
         # BLAS and ScaLAPACK
         self.setvar_env_makeopt('BLASOPT', '%s -L%s %s %s' % (os.getenv('LDFLAGS'), os.getenv('MPI_LIB_DIR'),
-                                                              os.getenv('LIBSCALAPACK_MT'), libmpi))
+                                                              os.getenv('LIBSCALAPACK_MT'), os.getenv('LIBMPI')))
 
         self.setvar_env_makeopt('SCALAPACK', '%s %s' % (os.getenv('LDFLAGS'), os.getenv('LIBSCALAPACK_MT')))
         if self.toolchain.options['i8']:
